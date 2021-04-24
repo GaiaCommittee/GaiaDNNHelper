@@ -70,5 +70,6 @@ namespace Gaia::DNNHelper
                                             .Confidence = static_cast<float>(biggest_confidence)});
             }
         }
+        return results;
     }
 }
