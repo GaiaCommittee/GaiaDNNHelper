@@ -9,11 +9,11 @@
 namespace Gaia::DNNHelper
 {
     /**
-     * @brief Helper object for network of YoloV4 model.
+     * @brief Helper object for network of Darknet classifier model.
      * @details
-     *  This class encapsulate the feed data and acquire output operations of YoloV4 model.
+     *  This class encapsulate the feed data and acquire output operations of Darknet model.
      */
-    class YoloV4
+    class Darknet
     {
     private:
         /// Size of the picture that network input layer accepts.
@@ -39,33 +39,11 @@ namespace Gaia::DNNHelper
                         cv::dnn::Target target_preference = cv::dnn::DNN_TARGET_CUDA);
 
         /**
-         * @brief The objects interfered from the input picture.
-         * @details
-         *  The first element is the class ID of the object.
-         *  The second element is the bounding box of the object.
-         *  The third element is the confidence of the object.
-         */
-        struct Object
-        {
-        public:
-            /// The id of the class names which this object belongs to.
-            unsigned int ClassID;
-            /// This variable describes how likely this object belongs to the  class.
-            float Confidence;
-            /// The bounding box of this object in the given raw input picture.
-            cv::Rect BoundingBox;
-        };
-
-        /**
          * @brief Detect objects in the given picture using the network.
          * @param picture The raw BGR picture used to detect objects in.
-         * @param confidence_threshold Only objects with confidence bigger than it will be put into the objects list.
-         * @param nms_threshold The threshold used in non-maximum suppression.
-         * @param top_k Will keep at most the top targets with the amount of k. Set it to 0 to keep all targets.
-         * @return Detected objects.
+         * @return A tuple of the most possible class id and the corresponding confidence.
          * @pre Initialize the network first.
          */
-        std::list<Object> Detect(const cv::Mat& picture, float confidence_threshold = 0.0f,
-                                 float nms_threshold = 0.2, unsigned int top_k = 0);
+        std::tuple<int, float> Classify(const cv::Mat& picture);
     };
 }

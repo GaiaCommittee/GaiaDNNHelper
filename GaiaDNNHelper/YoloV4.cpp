@@ -18,7 +18,8 @@ namespace Gaia::DNNHelper
     }
 
     /// Detect objects.
-    std::list<YoloV4::Object> YoloV4::Detect(const cv::Mat& picture, float confidence_threshold)
+    std::list<YoloV4::Object> YoloV4::Detect(const cv::Mat& picture, float confidence_threshold, float nms_threshold,
+                                             unsigned int top_k)
     {
         Exceptions::NullPointerException::ThrowIfNull(Network.get(), "Network");
 
@@ -35,6 +36,10 @@ namespace Gaia::DNNHelper
         // Start the forward broadcast and get the output data.
         std::vector<cv::Mat> output_blob;
         Network->forward(output_blob, NetworkOutputNames);
+
+        std::vector<cv::Rect> box_list;
+        std::vector<int> id_list;
+        std::vector<float> confidence_list;
 
         for (auto& output_data : output_blob)
         {
@@ -65,11 +70,24 @@ namespace Gaia::DNNHelper
                 int box_x = center_x - box_width / 2;
                 int box_y = center_y - box_height / 2;
 
-                results.emplace_back(Object{.ClassID = static_cast<unsigned int>(most_likely_class.x),
-                                            .BoundingBox = cv::Rect(box_x, box_y, box_width, box_height),
-                                            .Confidence = static_cast<float>(biggest_confidence)});
+                id_list.push_back(most_likely_class.x);
+                box_list.emplace_back(box_x, box_y, box_width, box_height);
+                confidence_list.push_back(static_cast<float>(biggest_confidence));
             }
         }
+
+        std::vector<int> indices_to_keep;
+        cv::dnn::NMSBoxes(box_list, confidence_list, confidence_threshold, 0.2, indices_to_keep, 1.0f,
+                          static_cast<int>(top_k));
+        for (int id : indices_to_keep)
+        {
+            results.push_back(Object{
+                .ClassID = static_cast<unsigned int>(id_list[id]),
+                .Confidence = confidence_list[id],
+                .BoundingBox = box_list[id]
+            });
+        }
+
         return results;
     }
 }
